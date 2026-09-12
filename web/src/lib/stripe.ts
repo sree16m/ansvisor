@@ -1,7 +1,9 @@
 import Stripe from 'stripe';
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-
+//export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+export const stripe = new Stripe(
+  process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder_for_build',
+);
 export const PRICE_IDS = {
   starter: {
     monthly: process.env.STRIPE_STARTER_MONTHLY_PRICE_ID!,

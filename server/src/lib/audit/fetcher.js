@@ -8,6 +8,7 @@
 const SCRAPEDO_API = 'https://api.scrape.do';
 
 function getToken() {
+  return process.env.SCRAPEDO_API_KEY || null;
   const token = process.env.SCRAPEDO_API_KEY;
   if (!token) throw new Error('SCRAPEDO_API_KEY must be configured');
   return token;
@@ -21,6 +22,11 @@ function getToken() {
  * @returns {Promise<{ ok: boolean, status: number, html: string, contentType: string|null }>}
  */
 export async function fetchViaScrapeDo(targetUrl, { render = true, retries = 1 } = {}) {
+  const token = getToken();
+  // If no Scrape.do key is set, cleanly fall back to direct fetch:
+  if (!token) {
+    return fetchDirect(targetUrl);
+  }
   const params = new URLSearchParams({ token: getToken(), url: targetUrl });
   if (render) params.set('render', 'true');
   const endpoint = `${SCRAPEDO_API}/?${params.toString()}`;
@@ -84,7 +90,9 @@ export async function fetchText(url) {
   if (direct.body !== null) return direct.body;
   // Clean 404 → the file is genuinely absent; no point spending a proxy credit.
   if (!direct.blocked) return null;
-
+  
+  // If no Scrape.do key is configured, skip proxy retry:
+  if (!getToken()) return null;
   // Direct request looked blocked — retry through Scrape.do (no JS render
   // needed for a text file). Treat HTML error pages as "absent".
   try {
@@ -94,5 +102,43 @@ export async function fetchText(url) {
     return viaProxy.html;
   } catch {
     return null;
+  }
+}
+
+/**
+ * Direct HTTP fetch fallback when SCRAPEDO_API_KEY is not configured.
+ */
+async function fetchDirect(targetUrl, { timeoutMs = 15000 } = {}) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(targetUrl, {
+      signal: controller.signal,
+      headers: {
+        'user-agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'accept':
+          'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        'accept-language': 'en-US,en;q=0.9',
+      },
+      redirect: 'follow',
+    });
+    const html = await res.text();
+    return {
+      ok: res.ok,
+      status: res.status,
+      html,
+      contentType: res.headers.get('content-type'),
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      status: 0,
+      html: '',
+      contentType: null,
+      error: err.message,
+    };
+  } finally {
+    clearTimeout(timer);
   }
 }

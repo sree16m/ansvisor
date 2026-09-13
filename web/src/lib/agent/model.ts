@@ -1,4 +1,4 @@
-import { createAnthropic, type AnthropicProvider } from '@ai-sdk/anthropic';
+//import { createAnthropic, type AnthropicProvider } from '@ai-sdk/anthropic';
 
 /**
  * Builds the in-product agent's LLM with the caller-supplied API key.
@@ -11,7 +11,13 @@ import { createAnthropic, type AnthropicProvider } from '@ai-sdk/anthropic';
  * Model choice (claude-sonnet-5) matches the tracking flow's Claude
  * option so behavior + cost shape stay consistent across the product.
  */
-export function buildAgentModel(apiKey: string): ReturnType<AnthropicProvider> {
-  const anthropic = createAnthropic({ apiKey });
-  return anthropic('claude-sonnet-5');
+//export function buildAgentModel(apiKey: string): ReturnType<AnthropicProvider> {
+//  const anthropic = createAnthropic({ apiKey });
+//  return anthropic('claude-sonnet-5');
+//}
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
+
+export function buildAgentModel(apiKey: string) {
+  const google = createGoogleGenerativeAI({ apiKey });
+  return google('gemini-2.0-flash');
 }

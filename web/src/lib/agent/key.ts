@@ -17,6 +17,8 @@ import { decryptApiKey } from '@/lib/agent/key-encryption';
  * Never logs the plaintext. Never returns the env key on cloud (avoid the
  * footgun of one customer falling back to Ansvisor's own quota).
  */
+
+/*
 export async function resolveAnthropicKey(organizationId: string): Promise<string | null> {
   if (!isCloud()) {
     return process.env.ANTHROPIC_API_KEY ?? null;
@@ -31,12 +33,13 @@ export async function resolveAnthropicKey(organizationId: string): Promise<strin
   if (!data?.anthropic_api_key_encrypted) return null;
   return decryptApiKey(data.anthropic_api_key_encrypted);
 }
-
+*/
 /**
  * Lightweight "is a key configured?" check that avoids decrypt — handy for
  * page-load gating where we only need to know whether to render the chat
  * UI vs the "set a key" empty state.
  */
+/*
 export async function isAnthropicKeyConfigured(organizationId: string): Promise<boolean> {
   if (!isCloud()) {
     return !!process.env.ANTHROPIC_API_KEY;
@@ -47,4 +50,22 @@ export async function isAnthropicKeyConfigured(organizationId: string): Promise<
     .eq('id', organizationId)
     .maybeSingle();
   return !!data?.anthropic_api_key_encrypted;
+}
+*/
+
+export async function resolveAnthropicKey(organizationId: string): Promise<string | null> {
+  return (
+    process.env.GOOGLE_GENERATIVE_AI_API_KEY ??
+    process.env.GOOGLE_GEMINI_API_KEY ??
+    process.env.ANTHROPIC_API_KEY ??
+    null
+  );
+}
+
+export async function isAnthropicKeyConfigured(organizationId: string): Promise<boolean> {
+  return !!(
+    process.env.GOOGLE_GENERATIVE_AI_API_KEY ||
+    process.env.GOOGLE_GEMINI_API_KEY ||
+    process.env.ANTHROPIC_API_KEY
+  );
 }
